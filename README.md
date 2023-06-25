@@ -1,2 +1,4 @@
 # react-spring-message-hub
-Created with CodeSandbox
+Message Toaster with @react-spring/web
+
+![](thumbnail.png)
