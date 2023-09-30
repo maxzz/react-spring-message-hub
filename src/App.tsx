@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo, useEffect, MouseEvent } from 'react';
-import { loremIpsum } from 'lorem-ipsum';
-import { X as IconCross } from 'react-feather';
 import { useTransition } from '@react-spring/web';
+import { X as IconCross } from 'react-feather';
+import { loremIpsum } from 'lorem-ipsum';
 import { Main, Container, Message, Button, Content, Life } from './styles';
 
 //https://www.react-spring.dev/docs/components/use-transition 'Notification Hub'
@@ -23,7 +23,7 @@ interface MessageHubProps {
     childrenAdd: (add: AddFunction) => void;
 }
 
-interface Item {
+interface ToasterItem {
     key: number;
     msg: string;
 }
@@ -32,9 +32,9 @@ function MessageHub({ config = { tension: 125, friction: 20, precision: 0.1 }, t
     const refMap = useMemo(() => new WeakMap(), []);
     const cancelMap = useMemo(() => new WeakMap(), []);
 
-    const [items, setItems] = useState<Item[]>([]);
+    const [toasterItems, setToasterItems] = useState<ToasterItem[]>([]);
 
-    const transitions = useTransition(items, {
+    const transitions = useTransition(toasterItems, {
         from: {
             opacity: 0,
             height: 0,
@@ -42,7 +42,10 @@ function MessageHub({ config = { tension: 125, friction: 20, precision: 0.1 }, t
         },
         enter: (item) => async (next, cancel) => {
             cancelMap.set(item, cancel);
-            await next({ opacity: 1, height: refMap.get(item).offsetHeight });
+            await next({
+                opacity: 1,
+                height: refMap.get(item).offsetHeight,
+            });
             await next({ life: '0%' });
         },
         leave: [
@@ -51,18 +54,14 @@ function MessageHub({ config = { tension: 125, friction: 20, precision: 0.1 }, t
         ],
         keys: (item) => item.key,
         onRest: (result, ctrl, item) => {
-            setItems((state) => state.filter((i) => i.key !== item.key));
+            setToasterItems((state) => state.filter((i) => i.key !== item.key));
         },
         config: (item, index, phase) =>
-            (key) => {
-                return (phase === 'enter' && key === 'life' ? { duration: timeout } : config);
-            },
+            (key) => (phase === 'enter' && key === 'life' ? { duration: timeout } : config),
     });
 
     useEffect(() => {
-        childrenAdd((msg: string) => {
-            setItems((state) => [...state, { key: lastToastId++, msg }]);
-        });
+        childrenAdd((msg: string) => setToasterItems((state) => [...state, { key: lastToastId++, msg }]));
     }, [childrenAdd]);
 
     return (
@@ -71,7 +70,7 @@ function MessageHub({ config = { tension: 125, friction: 20, precision: 0.1 }, t
                 <Message style={style}>
                     <Content ref={(ref: HTMLDivElement) => ref && refMap.set(item, ref)}>
                         <Life style={{ right: life }} />
-                        
+
                         <p>{item.msg}</p>
 
                         <Button
@@ -101,6 +100,7 @@ export function App() {
     return (
         <Main onClick={handleClick}>
             Click here to create notifications
+
             <MessageHub childrenAdd={(add: AddFunction) => { ref.current = add; }} />
         </Main>
     );
